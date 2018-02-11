@@ -1,0 +1,71 @@
+{
+  "name": "directory-module-webpack-plugin",
+  "version": "0.1.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc -p src",
+    "test": "npm run build && cross-env TS_NODE_PROJECT=test nyc mocha --require ts-node/register test/*.ts",
+    "coverage": "nyc report --reporter=text-lcov | coveralls",
+    "prepare": "npm test && npm run build",
+    "lint": "tslint src/*.ts test/*.ts"
+  },
+  "author": "Gyusun Yeom <omniavinco@gmail.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/bluebird-global": "^3.5.4",
+    "@types/chai": "^4.1.2",
+    "@types/extract-text-webpack-plugin": "^3.0.0",
+    "@types/lodash.assign": "^4.2.3",
+    "@types/lodash.frompairs": "^4.0.3",
+    "@types/lodash.partial": "^4.2.3",
+    "@types/minimatch": "^3.0.3",
+    "@types/mocha": "^2.2.48",
+    "@types/node": "^9.4.5",
+    "@types/webpack": "^3.8.5",
+    "chai": "^4.1.2",
+    "coveralls": "^3.0.0",
+    "cross-env": "^5.1.3",
+    "extract-text-webpack-plugin": "^3.0.2",
+    "file-loader": "^1.1.6",
+    "mocha": "^5.0.0",
+    "nyc": "^11.4.1",
+    "raw-loader": "^0.5.1",
+    "ts-loader": "^3.5.0",
+    "ts-node": "^4.1.0",
+    "tslint": "^5.9.1",
+    "typescript": "^2.7.1",
+    "webpack": "^3.11.0"
+  },
+  "peerDependencies": {
+    "webpack": "^3.11.0"
+  },
+  "dependencies": {
+    "bluebird": "^3.5.1",
+    "bluebird-global": "^1.0.1",
+    "json-beautify": "^1.0.1",
+    "lodash.assign": "^4.2.0",
+    "lodash.frompairs": "^4.0.1",
+    "lodash.partial": "^4.2.1",
+    "minimatch": "^3.0.4"
+  },
+  "nyc": {
+    "extension": [
+      ".ts"
+    ],
+    "include": [
+      "src/**/*.ts"
+    ],
+    "reporter": [
+      "html",
+      "text"
+    ],
+    "all": true
+  },
+  "files": [
+    "*.d.ts",
+    "*.js",
+    "emitter/*.js",
+    "emitter/*.d.ts"
+  ]
+}

@@ -1,0 +1,11 @@
+node_modules
+.nyc_output
+coverage
+
+/emitter
+/*.js
+/*.d.ts
+/*.js.map
+*.tgz
+
+/test/dist
