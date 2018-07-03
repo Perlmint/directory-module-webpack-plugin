@@ -59,9 +59,13 @@ export default class GameAssetPlugin implements wp.Plugin {
 			return callback(null, data);
 		}
 
-		const modulePath = await new Promise<string | undefined>(
+		const lastLoaderDelimeterPos = data.request.lastIndexOf("!") + 1;
+		const request = data.request.substring(lastLoaderDelimeterPos);
+		const loader = data.request.substr(0, lastLoaderDelimeterPos);
+
+		let modulePath = await new Promise<string | undefined>(
 			resolve => this.resolvers.context.resolve(
-				data.contextInfo, data.context, data.request,
+				data.contextInfo, data.context, request,
 				(_e: Error | null, o: any) => resolve(o),
 			)
 		);
@@ -75,10 +79,11 @@ export default class GameAssetPlugin implements wp.Plugin {
 
 			for (const match of plugin.convertOption) {
 				if (match[0].test(moduleRelative)) {
-					const outModuleRequest = (await plugin.getEmitter(match[1])).getName(modulePath);
-					await plugin.populateFilesystem(this.resolvers.normal.fileSystem, data.context, modulePath, outModuleRequest, match[1]);
-					plugin.populatedDirectories[data.request] = outModuleRequest;
+					const outModulePath = (await plugin.getEmitter(match[1])).getName(modulePath);
+					await plugin.populateFilesystem(this.resolvers.normal.fileSystem, data.context, modulePath, outModulePath, match[1]);
+					plugin.populatedDirectories[data.request] = outModulePath;
 
+					const outModuleRequest = `${loader}${outModulePath}`;
 					data.request = outModuleRequest;
 					break;
 				}
