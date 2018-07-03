@@ -6,6 +6,8 @@
 Generate module based on directory contents
 
 ## Usage
+
+### Configuration
 ```javascript
 import DirectoryModulePlugin from "directory-module-webpack-plugin";
 
@@ -21,4 +23,7 @@ export = {
 };
 ```
 
-## 
+### Source code
+```javascript
+import object_directory_contents from "./object";
+```
