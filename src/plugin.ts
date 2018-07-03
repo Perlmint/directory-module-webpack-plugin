@@ -30,9 +30,9 @@ export type Compiler = wp.Compiler & {
 
 type IBeforeResolveRequestCallback = (error: Error | null | undefined, data: IResolveRequest) => void;
 
-export default class GameAssetPlugin implements wp.Plugin {
+export default class DirectoryModulePlugin implements wp.Plugin {
 	private static async beforeResolve(
-		this: any, plugin: GameAssetPlugin, data: IResolveRequest, callback: IBeforeResolveRequestCallback,
+		this: any, plugin: DirectoryModulePlugin, data: IResolveRequest, callback: IBeforeResolveRequestCallback,
 	) {
 		if (plugin.populatedDirectories[data.request]) {
 			data.request = plugin.populatedDirectories[data.request];
@@ -97,7 +97,7 @@ export default class GameAssetPlugin implements wp.Plugin {
 			this.populatedDirectories = {};
 		});
 		compiler.plugin("normal-module-factory", (nmf) => {
-			nmf.plugin("before-resolve", partial(GameAssetPlugin.beforeResolve, this));
+			nmf.plugin("before-resolve", partial(DirectoryModulePlugin.beforeResolve, this));
 		});
 	}
 
