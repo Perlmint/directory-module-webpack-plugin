@@ -1,9 +1,11 @@
 {
   "name": "directory-module-webpack-plugin",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Webpack plugin generating modules based on directory contents",
   "keywords": [
-    "webpack", "plugin", "directory"
+    "webpack",
+    "plugin",
+    "directory"
   ],
   "main": "plugin.js",
   "scripts": {
