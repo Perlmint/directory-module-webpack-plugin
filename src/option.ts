@@ -2,23 +2,34 @@ import { Minimatch } from "minimatch";
 import { isAbsolute, relative } from "path";
 
 export type EmitType = "json-object" | "json-array" | "ts-object";
-export type PluginOption = EmitType | {
-	[globPath: string]: EmitType,
-};
+interface IMultipleEmitOption {
+	[globPath: string]: EmitType;
+}
+export type PluginOption = EmitType | IMultipleEmitOption;
 export type InternalOption = Array < [RegExp, EmitType] > ;
 
 export function ConvertOption(context: string | undefined, option: PluginOption) {
-	const ret: InternalOption = [];
 	if (typeof option === "string") {
-		ret.push([new Minimatch("*").makeRe(), option]);
-		ret.push([new Minimatch("**/*").makeRe(), option]);
+		return ConvertSingleOption(option);
 	} else {
-		for (let key of Object.keys(option)) {
-			if (context !== undefined && isAbsolute(key)) {
-				key = relative(context, key);
-			}
-			ret.push([new Minimatch(key).makeRe(), option[key]]);
+		return ConvertMultipleOption(context, option);
+	}
+}
+
+function ConvertSingleOption(option: EmitType): InternalOption {
+	return [
+		[new Minimatch("*").makeRe(), option],
+		[new Minimatch("**/*").makeRe(), option],
+	];
+}
+
+function ConvertMultipleOption(context: string | undefined, option: IMultipleEmitOption) {
+	const ret: InternalOption = [];
+	for (let key of Object.keys(option)) {
+		if (context !== undefined && isAbsolute(key)) {
+			key = relative(context, key);
 		}
+		ret.push([new Minimatch(key).makeRe(), option[key]]);
 	}
 
 	return ret;
