@@ -31,6 +31,23 @@ export type Compiler = wp.Compiler & {
 type IBeforeResolveRequestCallback = (error: Error | null | undefined, data: IResolveRequest) => void;
 
 export default class DirectoryModulePlugin implements wp.Plugin {
+	private static async resolveRequest(contextResolver: any, data: IResolveRequest) {
+		const lastLoaderDelimeterPos = data.request.lastIndexOf("!") + 1;
+		const request = data.request.substring(lastLoaderDelimeterPos);
+		const loader = data.request.substr(0, lastLoaderDelimeterPos);
+
+		const modulePath = await new Promise<string | undefined>(
+			(resolve) => contextResolver.resolve(
+				data.contextInfo, data.context, request,
+				(_: Error | null, o: any) => resolve(o),
+			),
+		);
+
+		return {
+			loader, modulePath,
+		};
+	}
+
 	private static async beforeResolve(
 		this: any, plugin: DirectoryModulePlugin, data: IResolveRequest, callback: IBeforeResolveRequestCallback,
 	) {
@@ -39,16 +56,7 @@ export default class DirectoryModulePlugin implements wp.Plugin {
 			return callback(null, data);
 		}
 
-		const lastLoaderDelimeterPos = data.request.lastIndexOf("!") + 1;
-		const request = data.request.substring(lastLoaderDelimeterPos);
-		const loader = data.request.substr(0, lastLoaderDelimeterPos);
-
-		const modulePath = await new Promise<string | undefined>(
-			(resolve) => this.resolvers.context.resolve(
-				data.contextInfo, data.context, request,
-				(_: Error | null, o: any) => resolve(o),
-			),
-		);
+		const { loader, modulePath } = await DirectoryModulePlugin.resolveRequest(this.resolvers.context, data);
 
 		if (modulePath === undefined || !await exists(modulePath) || !await isDirectoryAsync(modulePath)) {
 			return callback(null, data);
@@ -59,16 +67,11 @@ export default class DirectoryModulePlugin implements wp.Plugin {
 
 			for (const match of plugin.convertOption) {
 				if (match[0].test(moduleRelative)) {
-					const outModulePath = (await plugin.getEmitter(match[1])).getName(modulePath);
-					await plugin.populateFilesystem(
+					data.request = await plugin.populateModule(
 						this.resolvers.normal.fileSystem,
-						data.context, modulePath, outModulePath,
-						match[1],
+						match[1], loader, modulePath,
+						data.context, data.request,
 					);
-					plugin.populatedDirectories[data.request] = outModulePath;
-
-					const outModuleRequest = `${loader}${outModulePath}`;
-					data.request = outModuleRequest;
 					break;
 				}
 			}
@@ -99,6 +102,20 @@ export default class DirectoryModulePlugin implements wp.Plugin {
 		compiler.plugin("normal-module-factory", (nmf) => {
 			nmf.plugin("before-resolve", partial(DirectoryModulePlugin.beforeResolve, this));
 		});
+	}
+
+	private async populateModule(
+		fs: any, type: EmitType,
+		loader: string, modulePath: string,
+		context: string, request: string,
+	) {
+		const outModulePath = (await this.getEmitter(type)).getName(modulePath);
+		await this.populateFilesystem(
+			fs, context, modulePath, outModulePath, type,
+		);
+		this.populatedDirectories[request] = outModulePath;
+
+		return `${loader}${outModulePath}`;
 	}
 
 	private async populateFilesystem(fs: any, context: string, modulePath: string, outPath: string, emitType: EmitType) {
