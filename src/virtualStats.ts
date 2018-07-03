@@ -1,3 +1,4 @@
+// tslint:disable
 /**
  * Used to cache a stats object for the virtual file.
  * Based on the `mock-fs` package.
