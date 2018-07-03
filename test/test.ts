@@ -1,25 +1,26 @@
-import "mocha";
-import { assert } from "chai";
-import webpack from "webpack";
-import path from "path";
-import fs from "fs";
 
-function readFileContents(path: string) {
-	return fs.readFileSync(path, {
-		encoding: "utf8"
+import { assert } from "chai";
+import fs from "fs";
+import "mocha";
+import path from "path";
+import webpack from "webpack";
+
+function readFileContents(filePath: string) {
+	return fs.readFileSync(filePath, {
+		encoding: "utf8",
 	}).replace(/\r\n/g, "\n");
 }
 
 async function runTestCase(this: Mocha.ITestCallbackContext, testCase: string) {
-	const testDirectory = path.join(__dirname, 'cases', testCase);
-	const outputDirectory = path.join(__dirname, 'dist', testCase);
+	const testDirectory = path.join(__dirname, "cases", testCase);
+	const outputDirectory = path.join(__dirname, "dist", testCase);
 	let webpackConfig: any;
 
-	const configFile = path.join(testDirectory, 'webpack.config.js');
+	const configFile = path.join(testDirectory, "webpack.config.js");
 	if (fs.existsSync(configFile)) {
 		// eslint-disable-next-line import/no-dynamic-require, global-require
 		webpackConfig = require(configFile);
-		if (typeof webpackConfig === 'function') {
+		if (typeof webpackConfig === "function") {
 			webpackConfig = webpackConfig();
 		}
 	}
@@ -34,19 +35,19 @@ async function runTestCase(this: Mocha.ITestCallbackContext, testCase: string) {
 			{
 				test: /\.json$/,
 				use: [{
-					loader:'file-loader',
+					loader: "file-loader",
 					options: {
-						name: '[path][name].[ext]'
-					}
-				}]
+						name: "[path][name].[ext]",
+					},
+				}],
 			},
 		];
 	}
 	options.output = {
-		filename: 'main.js',
+		filename: "main.js",
+		library: "test",
+		libraryTarget: "umd",
 		path: outputDirectory,
-		library: 'test',
-		libraryTarget: 'umd',
 	};
 
 	return new Promise<void>((resolve, reject) => webpack(options, (err, stats) => {
@@ -58,7 +59,7 @@ async function runTestCase(this: Mocha.ITestCallbackContext, testCase: string) {
 			reject(new Error(stats.toString()));
 			return;
 		}
-		const expectedDirectory = path.join(testDirectory, '__expected');
+		const expectedDirectory = path.join(testDirectory, "__expected");
 		if (fs.existsSync(expectedDirectory)) {
 			fs.readdirSync(expectedDirectory).forEach((file) => {
 				const filePath = path.join(expectedDirectory, file);
@@ -66,11 +67,11 @@ async function runTestCase(this: Mocha.ITestCallbackContext, testCase: string) {
 				assert.equal(
 					readFileContents(actualPath),
 					readFileContents(filePath),
-					`${file} should be correct`
+					`${file} should be correct`,
 				);
 			});
 		}
-		const expectedExportsDirectory = path.join(testDirectory, '__expected_exports');
+		const expectedExportsDirectory = path.join(testDirectory, "__expected_exports");
 		if (fs.existsSync(expectedExportsDirectory)) {
 			const exporteds = require(path.join(outputDirectory, "main.js"));
 			fs.readdirSync(expectedExportsDirectory).forEach((file) => {
@@ -80,7 +81,7 @@ async function runTestCase(this: Mocha.ITestCallbackContext, testCase: string) {
 				assert.deepEqual(
 					exporteds[base],
 					require(filePath),
-					`${file} should be correct`
+					`${file} should be correct`,
 				);
 			});
 		}
@@ -93,7 +94,7 @@ const casesRoot = path.join(__dirname, "cases");
 for (const testCase of fs.readdirSync(casesRoot)) {
 	const stat = fs.statSync(path.join(casesRoot, testCase));
 	if (stat.isDirectory()) {
-		describe(testCase, function (this) {
+		describe(testCase, function(this) {
 			it("run case", runTestCase.bind(this, testCase));
 		});
 	}

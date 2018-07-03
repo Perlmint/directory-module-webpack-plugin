@@ -1,6 +1,6 @@
 import { exists as existsAsync, readdir as readdirAsync, stat as statAsync, statSync } from "fs";
-import { promisify } from "util";
 import { posix, relative } from "path";
+import { promisify } from "util";
 
 export const exists = promisify(existsAsync);
 export const readdir = promisify(readdirAsync);
@@ -17,7 +17,7 @@ export function isDirectorySync(path: string) {
 }
 
 export function normalizePath(base: string, path: string) {
-	return `./${posix.normalize(relative(base, path).replace(/\\/g, '/'))}`;
+	return `./${posix.normalize(relative(base, path).replace(/\\/g, "/"))}`;
 }
 
 import beautifyJSON from "json-beautify";
