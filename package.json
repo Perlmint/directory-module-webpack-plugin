@@ -2,7 +2,7 @@
   "name": "directory-module-webpack-plugin",
   "version": "0.1.0",
   "description": "",
-  "main": "index.js",
+  "main": "plugin.js",
   "scripts": {
     "build": "tsc -p src",
     "test": "npm run build && cross-env TS_NODE_PROJECT=test nyc mocha --require ts-node/register test/*.ts",
