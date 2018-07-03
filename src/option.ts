@@ -1,4 +1,5 @@
 import { Minimatch } from "minimatch";
+import { isAbsolute, relative } from "path";
 
 export type EmitType = "json-object" | "json-array" | "ts-object";
 export type PluginOption = EmitType | {
@@ -6,13 +7,16 @@ export type PluginOption = EmitType | {
 };
 export type InternalOption = Array < [RegExp, EmitType] > ;
 
-export function ConvertOption(option: PluginOption) {
+export function ConvertOption(context: string | undefined, option: PluginOption) {
 	const ret: InternalOption = [];
 	if (typeof option === "string") {
 		ret.push([new Minimatch("*").makeRe(), option]);
 		ret.push([new Minimatch("**/*").makeRe(), option]);
 	} else {
-		for (const key of Object.keys(option)) {
+		for (let key of Object.keys(option)) {
+			if (context !== undefined && isAbsolute(key)) {
+				key = relative(context, key);
+			}
 			ret.push([new Minimatch(key).makeRe(), option[key]]);
 		}
 	}

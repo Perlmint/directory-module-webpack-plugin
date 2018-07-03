@@ -19,6 +19,7 @@ declare global {
 }
 
 interface IResolveRequest {
+	contextInfo: any;
 	context: string;
 	request: string;
 }
@@ -30,16 +31,20 @@ export type Compiler = wp.Compiler & {
 type IBeforeResolveRequestCallback = (error: Error | null | undefined, data: IResolveRequest) => void;
 
 export default class GameAssetPlugin implements wp.Plugin {
-	private convertOption: InternalOption;
+	private convertOption!: InternalOption;
+	private rawOption: PluginOption;
 	private context?: string;
 	private populatedDirectories: {[module: string]: string} = {};
 
 	constructor(option: PluginOption) {
-		this.convertOption = ConvertOption(option);
+		this.rawOption = option;
 	}
 
 	public apply(compiler: Compiler) {
 		this.context = compiler.options.context;
+
+		this.convertOption = ConvertOption(this.context, this.rawOption);
+
 		compiler.plugin("compilation", () => {
 			this.populatedDirectories = {};
 		});
@@ -54,9 +59,14 @@ export default class GameAssetPlugin implements wp.Plugin {
 			return callback(null, data);
 		}
 
-		const modulePath = join(data.context, data.request);
+		const modulePath = await new Promise<string | undefined>(
+			resolve => this.resolvers.context.resolve(
+				data.contextInfo, data.context, data.request,
+				(_e: Error | null, o: any) => resolve(o),
+			)
+		);
 
-		if (!await exists(modulePath) || !await isDirectoryAsync(modulePath)) {
+		if (modulePath === undefined || !await exists(modulePath) || !await isDirectoryAsync(modulePath)) {
 			return callback(null, data);
 		}
 
@@ -65,8 +75,8 @@ export default class GameAssetPlugin implements wp.Plugin {
 
 			for (const match of plugin.convertOption) {
 				if (match[0].test(moduleRelative)) {
-					const outModuleRequest = (await plugin.getEmitter(match[1])).getName(data.request);
-					await plugin.populateFilesystem(this.resolvers.normal.fileSystem, data.context, modulePath, join(data.context, outModuleRequest), match[1]);
+					const outModuleRequest = (await plugin.getEmitter(match[1])).getName(modulePath);
+					await plugin.populateFilesystem(this.resolvers.normal.fileSystem, data.context, modulePath, outModuleRequest, match[1]);
 					plugin.populatedDirectories[data.request] = outModuleRequest;
 
 					data.request = outModuleRequest;
