@@ -1,7 +1,10 @@
 {
   "name": "directory-module-webpack-plugin",
   "version": "0.1.0",
-  "description": "",
+  "description": "Webpack plugin generating modules based on directory contents",
+  "keywords": [
+    "webpack", "plugin", "directory"
+  ],
   "main": "plugin.js",
   "scripts": {
     "build": "tsc -p src",
