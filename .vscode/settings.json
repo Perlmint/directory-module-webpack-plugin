@@ -13,5 +13,6 @@
         "coverage": true,
         "emitter": true,
         "*.tgz": true,
-    }
+    },
+    "typescript.tsdk": "node_modules\\typescript\\lib"
 }
