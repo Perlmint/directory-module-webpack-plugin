@@ -5,7 +5,7 @@
     ],
     "jsRules": {},
     "rules": {
-        "indent": [true, "tabs"],
+        "indent": [true, "tabs"]
     },
     "rulesDirectory": []
 }
