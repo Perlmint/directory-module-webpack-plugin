@@ -1,14 +1,32 @@
 
 import { assert } from "chai";
 import fs from "fs";
+import _ from "lodash";
 import "mocha";
 import path from "path";
+import { promisify } from "util";
 import webpack from "webpack";
 
-function readFileContents(filePath: string) {
-	return fs.readFileSync(filePath, {
+const readFile = promisify(fs.readFile);
+const readDir = promisify(fs.readdir);
+const stat = promisify(fs.stat);
+
+async function readFileContents(filePath: string) {
+	return (await readFile(filePath, {
 		encoding: "utf8",
-	}).replace(/\r\n/g, "\n");
+	})).replace(/\r\n/g, "\n");
+}
+
+async function collectContents(directory: string): Promise<string[]> {
+	return _.flatten(await Promise.all((await readDir(directory)).map(async (sub) => {
+		const fullPath = path.join(directory, sub);
+		const stats = await stat(fullPath);
+		if (stats.isDirectory()) {
+			return collectContents(fullPath);
+		} else {
+			return fullPath;
+		}
+	})));
 }
 
 async function runTestCase(this: Mocha.ITestCallbackContext, testCase: string) {
@@ -59,41 +77,48 @@ async function runTestCase(this: Mocha.ITestCallbackContext, testCase: string) {
 			reject(new Error(stats.toString()));
 			return;
 		}
+		const checkPromises: Array<Promise<any>> = [];
 		const expectedDirectory = path.join(testDirectory, "__expected");
 		if (fs.existsSync(expectedDirectory)) {
-			fs.readdirSync(expectedDirectory).forEach((file) => {
-				const filePath = path.join(expectedDirectory, file);
+			checkPromises.push(collectContents(expectedDirectory).then((files) => Promise.all(files.map((filePath) => {
+				const file = path.relative(expectedDirectory, filePath);
 				const actualPath = path.join(outputDirectory, file);
-				assert.equal(
+
+				return Promise.all([
 					readFileContents(actualPath),
 					readFileContents(filePath),
-					`${file} should be correct`,
-				);
-			});
+				]).then(([actualContent, expectedContents]) => {
+					assert.equal(
+						actualContent,
+						expectedContents,
+						`${file} should be correct`,
+					);
+				});
+			}))));
 		}
 		const expectedExportsDirectory = path.join(testDirectory, "__expected_exports");
 		if (fs.existsSync(expectedExportsDirectory)) {
 			const exporteds = require(path.join(outputDirectory, "main.js"));
-			fs.readdirSync(expectedExportsDirectory).forEach((file) => {
+			checkPromises.push(collectContents(expectedExportsDirectory).then((files) => Promise.all(files.map((filePath) => {
+				const file = path.relative(expectedExportsDirectory, filePath);
 				const ext = path.extname(file);
 				const base = path.basename(file, ext);
-				const filePath = path.join(expectedExportsDirectory, file);
 				assert.deepEqual(
 					exporteds[base],
 					require(filePath),
 					`${file} should be correct`,
 				);
-			});
+			}))));
 		}
 
-		resolve();
+		Promise.all(checkPromises).then(() => resolve());
 	}));
 }
 
 const casesRoot = path.join(__dirname, "cases");
 for (const testCase of fs.readdirSync(casesRoot)) {
-	const stat = fs.statSync(path.join(casesRoot, testCase));
-	if (stat.isDirectory()) {
+	const stats = fs.statSync(path.join(casesRoot, testCase));
+	if (stats.isDirectory()) {
 		describe(testCase, function(this) {
 			it("run case", runTestCase.bind(this, testCase));
 		});
