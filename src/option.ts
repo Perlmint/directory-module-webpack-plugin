@@ -1,5 +1,6 @@
 import { Minimatch } from "minimatch";
 import { isAbsolute, relative } from "path";
+import { normalizePath } from "./util";
 
 export type EmitType = "json-object" | "json-array" | "ts-object";
 interface IMultipleEmitOption {
@@ -29,6 +30,7 @@ function ConvertMultipleOption(context: string | undefined, option: IMultipleEmi
 		if (context !== undefined && isAbsolute(key)) {
 			key = relative(context, key);
 		}
+		key = normalizePath(key);
 		ret.push([new Minimatch(key).makeRe(), option[key]]);
 	}
 

@@ -1,6 +1,6 @@
 import "bluebird-global";
 import partial from "lodash.partial";
-import { join, relative } from "path";
+import { dirname, join, relative } from "path";
 import wp from "webpack";
 import {
 	ConvertOption,
@@ -9,7 +9,7 @@ import {
 	PluginOption,
 } from "./option";
 import {
-	exists, isDirectoryAsync, isDirectorySync, readdir,
+	exists, isDirectoryAsync, isDirectorySync, normalizePath, readdir,
 } from "./util";
 import { StatsCreateOption, VirtualStats } from "./virtualStats";
 
@@ -63,14 +63,14 @@ export default class DirectoryModulePlugin implements wp.Plugin {
 		}
 
 		try {
-			const moduleRelative = plugin.context ? relative(plugin.context, modulePath) : modulePath;
+			const moduleRelative = normalizePath(plugin.context ? relative(plugin.context, modulePath) : modulePath);
 
 			for (const match of plugin.convertOption) {
 				if (match[0].test(moduleRelative)) {
 					data.request = await plugin.populateModule(
 						this.resolvers.normal.fileSystem,
 						match[1], loader, modulePath,
-						data.context, data.request,
+						data.request,
 					);
 					break;
 				}
@@ -107,18 +107,18 @@ export default class DirectoryModulePlugin implements wp.Plugin {
 	private async populateModule(
 		fs: any, type: EmitType,
 		loader: string, modulePath: string,
-		context: string, request: string,
+		request: string,
 	) {
 		const outModulePath = (await this.getEmitter(type)).getName(modulePath);
 		await this.populateFilesystem(
-			fs, context, modulePath, outModulePath, type,
+			fs, modulePath, outModulePath, type,
 		);
 		this.populatedDirectories[request] = outModulePath;
 
 		return `${loader}${outModulePath}`;
 	}
 
-	private async populateFilesystem(fs: any, context: string, modulePath: string, outPath: string, emitType: EmitType) {
+	private async populateFilesystem(fs: any, modulePath: string, outPath: string, emitType: EmitType) {
 		const mapIsAvailable = typeof Map !== "undefined";
 		const statStorageIsMap = mapIsAvailable && fs._statStorage.data instanceof Map;
 		const readFileStorageIsMap = mapIsAvailable && fs._readFileStorage.data instanceof Map;
@@ -134,7 +134,7 @@ export default class DirectoryModulePlugin implements wp.Plugin {
 
 		const containedEntries = (await readdir(modulePath)).map((p) => join(modulePath, p));
 		const containedFiles = containedEntries.filter((p) => !isDirectorySync(p));
-		const contents = await (await this.getEmitter(emitType)).generate(context, containedFiles);
+		const contents = await (await this.getEmitter(emitType)).generate(dirname(modulePath), containedFiles);
 		const options: StatsCreateOption = {
 			contents,
 		};

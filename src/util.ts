@@ -16,8 +16,12 @@ export function isDirectorySync(path: string) {
 	return targetStat.isDirectory();
 }
 
-export function normalizePath(base: string, path: string) {
-	return `./${posix.normalize(relative(base, path).replace(/\\/g, "/"))}`;
+export function normalizePath(path: string) {
+	return posix.normalize(path.replace(/\\/g, "/"));
+}
+
+export function normalizedRelativePath(base: string, path: string) {
+	return `./${normalizePath(relative(base, path))}`;
 }
 
 import beautifyJSON from "json-beautify";
