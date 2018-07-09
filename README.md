@@ -1,6 +1,8 @@
+[![npm version](https://badge.fury.io/js/directory-module-webpack-plugin.svg)](https://badge.fury.io/js/directory-module-webpack-plugin)
 [![Build Status](https://travis-ci.org/Perlmint/directory-module-webpack-plugin.svg?branch=master)](https://travis-ci.org/Perlmint/directory-module-webpack-plugin)
 [![Coverage Status](https://coveralls.io/repos/github/Perlmint/directory-module-webpack-plugin/badge.svg?branch=master)](https://coveralls.io/github/Perlmint/directory-module-webpack-plugin?branch=master)
 [![Maintainability](https://api.codeclimate.com/v1/badges/79466958384dd05c69d3/maintainability)](https://codeclimate.com/github/Perlmint/directory-module-webpack-plugin/maintainability)
+[![GitHub license](https://img.shields.io/github/license/Perlmint/directory-module-webpack-plugin.svg)](https://github.com/Perlmint/directory-module-webpack-plugin/blob/master/LICENSE)
 
 # directory-module-webpack-plugin
 Generate module based on directory contents
